@@ -86,11 +86,11 @@ void WebSocketServer::OnOpen(ix::WebSocketOpenInfo openInfo, std::shared_ptr<ix:
 	{
 		return;
 	}
-	
-    {
-        std::lock_guard<std::mutex> lock(m_headersMutex);
-        m_connectionHeaders[connectionState->getId()] = openInfo.headers;
-    }
+
+	{
+		std::lock_guard<std::mutex> lock(m_headersMutex);
+		m_connectionHeaders[connectionState->getId()] = openInfo.headers;
+	}
 
 	g_TaskQueue.Push([this, openInfo, connectionState]()
 	{
@@ -108,13 +108,13 @@ void WebSocketServer::OnClose(ix::WebSocketCloseInfo closeInfo, std::shared_ptr<
 	{
 		return;
 	}
+	
+	std::string connectionId = connectionState->getId();
 
-    std::string connectionId = connectionState->getId();
-    
-    {
-        std::lock_guard<std::mutex> lock(m_headersMutex);
-        m_connectionHeaders.erase(connectionId);
-    }
+	{
+		std::lock_guard<std::mutex> lock(m_headersMutex);
+		m_connectionHeaders.erase(connectionId);
+	}
 
 	g_TaskQueue.Push([this, closeInfo, connectionState]()
 	{
@@ -182,13 +182,13 @@ bool WebSocketServer::disconnectClient(const std::string& clientId) {
 }
 
 std::vector<std::string> WebSocketServer::getClientIds() {
-    std::vector<std::string> clientIds;
+	std::vector<std::string> clientIds;
 
-    auto clients = m_webSocketServer.getClients();
+	auto clients = m_webSocketServer.getClients();
 
-    for (const auto& client : clients) {
-        clientIds.push_back(client.second);
-    }
+	for (const auto& client : clients) {
+		clientIds.push_back(client.second);
+	}
 
-    return clientIds;
+	return clientIds;
 }
