@@ -1,6 +1,5 @@
 #include "extension.h"
 
-
 class WebSocketServer
 {
 public:
@@ -19,6 +18,9 @@ public:
 	
 	ix::WebSocketServer m_webSocketServer;
 	Handle_t m_webSocketServer_handle = BAD_HANDLE;
+
+    std::mutex m_headersMutex;
+    std::unordered_map<std::string, ix::WebSocketHttpHeaders> m_connectionHeaders;
 
 	IChangeableForward *pMessageForward = nullptr;
 	IChangeableForward *pOpenForward = nullptr;

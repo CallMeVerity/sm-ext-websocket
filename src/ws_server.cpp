@@ -59,6 +59,14 @@ void WebSocketServer::OnMessage(const std::string& message, std::shared_ptr<ix::
 		if (!pWebSocketClient->m_websocket_handle) return;
 		pWebSocketClient->m_keepConnecting = true;
 
+		{
+			std::lock_guard<std::mutex> lock(m_headersMutex);
+			auto it = m_connectionHeaders.find(connectionState->getId());
+			if (it != m_connectionHeaders.end()) {
+				pWebSocketClient->m_headers = it->second;
+			}
+		}
+
 		std::string remoteAddress = connectionState->getRemoteIp() + ":" + std::to_string(connectionState->getRemotePort());
 		pMessageForward->PushCell(m_webSocketServer_handle);
 		pMessageForward->PushCell(pWebSocketClient->m_websocket_handle);
@@ -78,6 +86,11 @@ void WebSocketServer::OnOpen(ix::WebSocketOpenInfo openInfo, std::shared_ptr<ix:
 	{
 		return;
 	}
+	
+    {
+        std::lock_guard<std::mutex> lock(m_headersMutex);
+        m_connectionHeaders[connectionState->getId()] = openInfo.headers;
+    }
 
 	g_TaskQueue.Push([this, openInfo, connectionState]()
 	{
@@ -95,6 +108,13 @@ void WebSocketServer::OnClose(ix::WebSocketCloseInfo closeInfo, std::shared_ptr<
 	{
 		return;
 	}
+
+    std::string connectionId = connectionState->getId();
+    
+    {
+        std::lock_guard<std::mutex> lock(m_headersMutex);
+        m_connectionHeaders.erase(connectionId);
+    }
 
 	g_TaskQueue.Push([this, closeInfo, connectionState]()
 	{
