@@ -35,3 +35,55 @@ public:
 	IChangeableForward *pCloseForward = nullptr;
 	IChangeableForward *pErrorForward = nullptr;
 };
+
+class WsMessageTaskContext : public ITaskContext
+{
+public:
+	WsMessageTaskContext(WebSocketClient* client, const std::string& message) 
+		: m_client(client), m_message(message) {}
+	
+	virtual void OnCompleted() override;
+	
+private:
+	WebSocketClient* m_client;
+	std::string m_message;
+};
+
+class WsOpenTaskContext : public ITaskContext
+{
+public:
+	WsOpenTaskContext(WebSocketClient* client, ix::WebSocketOpenInfo openInfo) 
+		: m_client(client), m_openInfo(openInfo) {}
+	
+	virtual void OnCompleted() override;
+	
+private:
+	WebSocketClient* m_client;
+	ix::WebSocketOpenInfo m_openInfo;
+};
+
+class WsCloseTaskContext : public ITaskContext
+{
+public:
+	WsCloseTaskContext(WebSocketClient* client, ix::WebSocketCloseInfo closeInfo) 
+		: m_client(client), m_closeInfo(closeInfo) {}
+	
+	virtual void OnCompleted() override;
+	
+private:
+	WebSocketClient* m_client;
+	ix::WebSocketCloseInfo m_closeInfo;
+};
+
+class WsErrorTaskContext : public ITaskContext
+{
+public:
+	WsErrorTaskContext(WebSocketClient* client, ix::WebSocketErrorInfo errorInfo) 
+		: m_client(client), m_errorInfo(errorInfo) {}
+	
+	virtual void OnCompleted() override;
+	
+private:
+	WebSocketClient* m_client;
+	ix::WebSocketErrorInfo m_errorInfo;
+};

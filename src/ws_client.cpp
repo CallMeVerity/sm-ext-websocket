@@ -55,57 +55,8 @@ void WebSocketClient::OnMessage(const std::string& message)
 		return;
 	}
 
-	g_TaskQueue.Push([this, message]()
-	{
-		const size_t messageLength = message.length() + 1;
-
-		switch (m_callback_type)
-		{
-			case Websocket_STRING:
-			{
-				pMessageForward->PushCell(m_websocket_handle);
-				pMessageForward->PushString(message.c_str());
-				pMessageForward->PushCell(messageLength);
-				pMessageForward->Execute(nullptr);
-				break;
-			}
-			case WebSocket_JSON:
-			{
-				auto pYYJsonWrapper = CreateWrapper();
-
-				yyjson_read_err readError;
-				yyjson_doc *idoc = yyjson_read_opts(const_cast<char*>(message.c_str()), message.length(), 0, nullptr, &readError);
-
-				if (readError.code)
-				{
-					yyjson_doc_free(idoc);
-					smutils->LogError(myself, "parse JSON message error (%u): %s at position: %d", readError.code, readError.msg, readError.pos);
-					return;
-				}
-
-				pYYJsonWrapper->m_pDocument = WrapImmutableDocument(idoc);
-				pYYJsonWrapper->m_pVal = yyjson_doc_get_root(idoc);
-
-				HandleError err;
-				HandleSecurity pSec(nullptr, myself->GetIdentity());
-				m_json_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper.release(), &pSec, nullptr, &err);
-
-				if (!m_json_handle)
-				{
-					smutils->LogError(myself, "Could not create JSON handle (error %d)", err);
-					return;
-				}
-
-				pMessageForward->PushCell(m_websocket_handle);
-				pMessageForward->PushCell(m_json_handle);
-				pMessageForward->PushCell(messageLength);
-				pMessageForward->Execute(nullptr);
-
-				handlesys->FreeHandle(m_json_handle, &pSec);
-				break;
-			}
-		}
-	});
+	WsMessageTaskContext *context = new WsMessageTaskContext(this, message);
+	g_WebsocketExt.AddTaskToQueue(context);
 }
 
 void WebSocketClient::OnOpen(ix::WebSocketOpenInfo openInfo) 
@@ -115,11 +66,8 @@ void WebSocketClient::OnOpen(ix::WebSocketOpenInfo openInfo)
 		return;
 	}
 
-	g_TaskQueue.Push([this, openInfo]()
-	{
-		pOpenForward->PushCell(m_websocket_handle);
-		pOpenForward->Execute(nullptr);
-	});
+	WsOpenTaskContext *context = new WsOpenTaskContext(this, openInfo);
+	g_WebsocketExt.AddTaskToQueue(context);
 }
 
 void WebSocketClient::OnClose(ix::WebSocketCloseInfo closeInfo) 
@@ -129,15 +77,8 @@ void WebSocketClient::OnClose(ix::WebSocketCloseInfo closeInfo)
 		return;
 	}
 	
-	// TODO: Fixed crash when unload extension after connecting
-	// 2024/06/30 - 23:09 - Fixed
-	g_TaskQueue.Push([this, closeInfo]()
-	{
-		pCloseForward->PushCell(m_websocket_handle);
-		pCloseForward->PushCell(closeInfo.code);
-		pCloseForward->PushString(closeInfo.reason.c_str());
-		pCloseForward->Execute(nullptr);
-	});
+	WsCloseTaskContext *context = new WsCloseTaskContext(this, closeInfo);
+	g_WebsocketExt.AddTaskToQueue(context);
 }
 
 void WebSocketClient::OnError(ix::WebSocketErrorInfo errorInfo) 
@@ -147,10 +88,79 @@ void WebSocketClient::OnError(ix::WebSocketErrorInfo errorInfo)
 		return;
 	}
 
-	g_TaskQueue.Push([this, errorInfo]()
+	WsErrorTaskContext *context = new WsErrorTaskContext(this, errorInfo);
+	g_WebsocketExt.AddTaskToQueue(context);
+}
+
+void WsMessageTaskContext::OnCompleted()
+{
+	const size_t messageLength = m_message.length() + 1;
+
+	switch (m_client->m_callback_type)
 	{
-		pErrorForward->PushCell(m_websocket_handle);
-		pErrorForward->PushString(errorInfo.reason.c_str());
-		pErrorForward->Execute(nullptr);
-	});
+		case Websocket_STRING:
+		{
+			m_client->pMessageForward->PushCell(m_client->m_websocket_handle);
+			m_client->pMessageForward->PushString(m_message.c_str());
+			m_client->pMessageForward->PushCell(messageLength);
+			m_client->pMessageForward->Execute(nullptr);
+			break;
+		}
+		case WebSocket_JSON:
+		{
+			auto pYYJsonWrapper = CreateWrapper();
+
+			yyjson_read_err readError;
+			yyjson_doc *idoc = yyjson_read_opts(const_cast<char*>(m_message.c_str()), messageLength, 0, nullptr, &readError);
+
+			if (readError.code)
+			{
+				yyjson_doc_free(idoc);
+				smutils->LogError(myself, "parse JSON message error (%u): %s at position: %d", readError.code, readError.msg, readError.pos);
+				return;
+			}
+
+			pYYJsonWrapper->m_pDocument = WrapImmutableDocument(idoc);
+			pYYJsonWrapper->m_pVal = yyjson_doc_get_root(idoc);
+
+			HandleError err;
+			HandleSecurity pSec(nullptr, myself->GetIdentity());
+			m_client->m_json_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper.release(), &pSec, nullptr, &err);
+
+			if (!m_client->m_json_handle)
+			{
+				smutils->LogError(myself, "Could not create JSON handle (error %d)", err);
+				return;
+			}
+
+			m_client->pMessageForward->PushCell(m_client->m_websocket_handle);
+			m_client->pMessageForward->PushCell(m_client->m_json_handle);
+			m_client->pMessageForward->PushCell(messageLength);
+			m_client->pMessageForward->Execute(nullptr);
+
+			handlesys->FreeHandle(m_client->m_json_handle, &pSec);
+			break;
+		}
+	}
+}
+
+void WsOpenTaskContext::OnCompleted()
+{
+	m_client->pOpenForward->PushCell(m_client->m_websocket_handle);
+	m_client->pOpenForward->Execute(nullptr);
+}
+
+void WsCloseTaskContext::OnCompleted()
+{
+	m_client->pCloseForward->PushCell(m_client->m_websocket_handle);
+	m_client->pCloseForward->PushCell(m_closeInfo.code);
+	m_client->pCloseForward->PushString(m_closeInfo.reason.c_str());
+	m_client->pCloseForward->Execute(nullptr);
+}
+
+void WsErrorTaskContext::OnCompleted()
+{
+	m_client->pErrorForward->PushCell(m_client->m_websocket_handle);
+	m_client->pErrorForward->PushString(m_errorInfo.reason.c_str());
+	m_client->pErrorForward->Execute(nullptr);
 }

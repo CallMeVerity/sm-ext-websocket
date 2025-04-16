@@ -29,3 +29,16 @@ public:
 
 	IChangeableForward *pResponseForward = nullptr;
 };
+
+class HttpResponseTaskContext : public ITaskContext
+{
+public:
+	HttpResponseTaskContext(HttpRequest* client, const ix::HttpResponsePtr& response) 
+		: m_client(client), m_response(response) {}
+	
+	virtual void OnCompleted() override;
+	
+private:
+	HttpRequest* m_client;
+	ix::HttpResponsePtr m_response;
+};

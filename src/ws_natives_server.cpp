@@ -265,43 +265,43 @@ static cell_t ws_IsDeflateEnabled(IPluginContext *pContext, const cell_t *params
 
 static cell_t ws_GetClientIdByIndex(IPluginContext *pContext, const cell_t *params)
 {
-    WebSocketServer *pWebsocketServer = GetWsServerPointer(pContext, params[1]);
-    if (!pWebsocketServer)
-    {
-        return 0;
-    }
+	WebSocketServer *pWebsocketServer = GetWsServerPointer(pContext, params[1]);
+	if (!pWebsocketServer)
+	{
+		return 0;
+	}
 
-    cell_t index = params[2];
-    const auto& ids = pWebsocketServer->getClientIds();
+	cell_t index = params[2];
+	const auto& ids = pWebsocketServer->getClientIds();
 
-    if (index < 0 || static_cast<size_t>(index) >= ids.size())
-    {
-        return 0;
-    }
+	if (index < 0 || static_cast<size_t>(index) >= ids.size())
+	{
+		return 0;
+	}
 
-    pContext->StringToLocal(params[3], params[4], ids[index].c_str());
+	pContext->StringToLocal(params[3], params[4], ids[index].c_str());
 
-    return 1;
+	return 1;
 }
 
 static cell_t ws_GetMaxClientIdLength(IPluginContext *pContext, const cell_t *params)
 {
-    WebSocketServer *pWebsocketServer = GetWsServerPointer(pContext, params[1]);
-    if (!pWebsocketServer)
-    {
-        return 0;
-    }
+	WebSocketServer *pWebsocketServer = GetWsServerPointer(pContext, params[1]);
+	if (!pWebsocketServer)
+	{
+		return 0;
+	}
 
-    const auto& ids = pWebsocketServer->getClientIds();
-    size_t maxLen = 0;
+	const auto& ids = pWebsocketServer->getClientIds();
+	size_t maxLen = 0;
 
-    for (const auto& id : ids)
-    {
-        if (id.length() > maxLen)
-            maxLen = id.length();
-    }
+	for (const auto& id : ids)
+	{
+		if (id.length() > maxLen)
+			maxLen = id.length();
+	}
 
-    return static_cast<cell_t>(maxLen + 1);
+	return static_cast<cell_t>(maxLen + 1);
 }
 
 const sp_nativeinfo_t ws_natives_server[] =

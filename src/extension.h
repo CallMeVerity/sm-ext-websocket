@@ -7,6 +7,7 @@
 #include <IXWebSocketServer.h>
 #include <IXHttpClient.h>
 #include <yyjsonwrapper.h>
+#include <task_context.h>
 #include <ws_client.h>
 #include <ws_server.h>
 #include <http_request.h>
@@ -19,6 +20,8 @@ public:
 	virtual bool SDK_OnLoad(char *error, size_t maxlength, bool late);
 	virtual void SDK_OnUnload();
 	virtual YYJsonWrapper *GetJSONPointer(IPluginContext *pContext, Handle_t handle);
+	public:
+		void AddTaskToQueue(ITaskContext *context);
 };
 
 class WsClientHandler : public IHandleTypeDispatch
@@ -51,7 +54,7 @@ extern WsClientHandler g_WsClientHandler;
 extern WsServerHandler g_WsServerHandler;
 extern JSONHandler g_JSONHandler;
 extern HttpHandler g_HttpHandler;
-extern ThreadSafeQueue<std::function<void()>> g_TaskQueue;
+extern ThreadSafeQueue<ITaskContext *> g_TaskQueue;
 
 extern const sp_nativeinfo_t ws_natives[];
 extern const sp_nativeinfo_t ws_natives_server[];

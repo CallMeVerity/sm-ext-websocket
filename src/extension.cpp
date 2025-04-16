@@ -11,15 +11,28 @@ WsServerHandler g_WsServerHandler;
 JSONHandler g_JSONHandler;
 HttpHandler g_HttpHandler;
 
-ThreadSafeQueue<std::function<void()>> g_TaskQueue;
+ThreadSafeQueue<ITaskContext *> g_TaskQueue;
 
 static void OnGameFrame(bool simulating) {
-	std::function<void()> task;
 	int count = 0;
-	while (g_TaskQueue.TryPop(task) && count < MAX_PROCESS) {
-		task();
-		count++;
+	ITaskContext *context = nullptr;
+	
+	while (count < MAX_PROCESS) {
+		if (!g_TaskQueue.TryPop(context)) {
+			break;
+		}
+		
+		if (context) {
+			context->OnCompleted();
+			delete context;
+			count++;
+		}
 	}
+}
+
+void WebsocketExtension::AddTaskToQueue(ITaskContext *context)
+{
+	g_TaskQueue.Push(context);
 }
 
 bool WebsocketExtension::SDK_OnLoad(char* error, size_t maxlen, bool late)

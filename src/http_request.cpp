@@ -59,19 +59,22 @@ void HttpRequest::onResponse(const ix::HttpResponsePtr response)
 		return;
 	}
 
-	g_TaskQueue.Push([this, response]()
-	{
-		HandleError err;
-		HandleSecurity sec(nullptr, myself->GetIdentity());
+	HttpResponseTaskContext *context = new HttpResponseTaskContext(this, response);
+	g_WebsocketExt.AddTaskToQueue(context);
+}
 
-		this->pResponseForward->PushCell(this->m_httpclient_handle);
-		this->pResponseForward->PushString(response->body.c_str());
-		this->pResponseForward->PushCell(response->statusCode);
-		this->pResponseForward->PushCell(response->body.size());
-		this->pResponseForward->Execute(nullptr);
+void HttpResponseTaskContext::OnCompleted()
+{
+	HandleError err;
+	HandleSecurity sec(nullptr, myself->GetIdentity());
 
-		handlesys->FreeHandle(this->m_httpclient_handle, &sec);
-	});
+	m_client->pResponseForward->PushCell(m_client->m_httpclient_handle);
+	m_client->pResponseForward->PushString(m_response->body.c_str());
+	m_client->pResponseForward->PushCell(m_response->statusCode);
+	m_client->pResponseForward->PushCell(m_response->body.size());
+	m_client->pResponseForward->Execute(nullptr);
+
+	handlesys->FreeHandle(m_client->m_httpclient_handle, &sec);
 }
 
 bool HttpRequest::Perform()
