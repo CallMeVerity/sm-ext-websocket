@@ -11,6 +11,7 @@ This is a [SourceMod](http://www.sourcemod.net/) extension that provides some me
 * Support permessage-deflate
 * Support SSL
 * Support x64
+* Support HTTP RESTful API with JSON and form data
 
 ## How to build this?
 ``` sh
@@ -26,6 +27,7 @@ ambuild
 ## Native
 * [json](https://github.com/ProjectSky/sm-ext-websocket/blob/main/scripting/include/websocket/yyjson.inc)
 * [websocket](https://github.com/ProjectSky/sm-ext-websocket/blob/main/scripting/include/websocket/ws.inc)
+* [http](https://github.com/ProjectSky/sm-ext-websocket/blob/main/scripting/include/websocket/http.inc)
 
 # Binary files
 * [GitHub Releases](https://github.com/ProjectSky/sm-ext-websocket/releases)
@@ -33,10 +35,9 @@ ambuild
 ## TODO
 - [x] WebSocket server support
 - [x] Windows support
-- [ ] HTTP support? (Because this is a WebSocket library I might not support it)
+- [x] HTTP support
 
 ## NOTES
-* HTTP functionality is not yet complete. Currently, only basic features are available
 * Server will not process data during the hibernation. You can set sv_hibernate_when_empty to 0 to disable hibernation
 
 ## Example

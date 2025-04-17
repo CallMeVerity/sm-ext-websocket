@@ -45,6 +45,10 @@ static cell_t ws_SetMessageCallback(IPluginContext *pContext, const cell_t *para
 	}
 
 	IPluginFunction *callback = pContext->GetFunctionById(params[2]);
+
+	if (pWebsocketServer->pMessageForward) {
+		forwards->ReleaseForward(pWebsocketServer->pMessageForward);
+	}
 	
 	pWebsocketServer->pMessageForward = forwards->CreateForwardEx(nullptr, ET_Ignore, 6, nullptr, Param_Cell, Param_Cell, Param_String, Param_Cell, Param_String, Param_String);
 	if (!pWebsocketServer->pMessageForward || !pWebsocketServer->pMessageForward->AddFunction(callback))
@@ -67,6 +71,10 @@ static cell_t ws_SetOpenCallback(IPluginContext *pContext, const cell_t *params)
 
 	IPluginFunction *callback = pContext->GetFunctionById(params[2]);
 
+	if (pWebsocketServer->pOpenForward) {
+		forwards->ReleaseForward(pWebsocketServer->pOpenForward);
+	}
+
 	pWebsocketServer->pOpenForward = forwards->CreateForwardEx(nullptr, ET_Ignore, 3, nullptr, Param_Cell, Param_String, Param_String);
 	if (!pWebsocketServer->pOpenForward || !pWebsocketServer->pOpenForward->AddFunction(callback))
 	{
@@ -88,6 +96,10 @@ static cell_t ws_SetCloseCallback(IPluginContext *pContext, const cell_t *params
 
 	IPluginFunction *callback = pContext->GetFunctionById(params[2]);
 
+	if (pWebsocketServer->pCloseForward) {
+		forwards->ReleaseForward(pWebsocketServer->pCloseForward);
+	}
+
 	pWebsocketServer->pCloseForward = forwards->CreateForwardEx(nullptr, ET_Ignore, 5, nullptr, Param_Cell, Param_Cell, Param_String, Param_String, Param_String);
 	if (!pWebsocketServer->pCloseForward || !pWebsocketServer->pCloseForward->AddFunction(callback))
 	{
@@ -108,6 +120,10 @@ static cell_t ws_SetErrorCallback(IPluginContext *pContext, const cell_t *params
 	}
 
 	IPluginFunction *callback = pContext->GetFunctionById(params[2]);
+
+	if (pWebsocketServer->pErrorForward) {
+		forwards->ReleaseForward(pWebsocketServer->pErrorForward);
+	}
 
 	pWebsocketServer->pErrorForward = forwards->CreateForwardEx(nullptr, ET_Ignore, 4, nullptr, Param_Cell, Param_String, Param_String, Param_String);
 	if (!pWebsocketServer->pErrorForward || !pWebsocketServer->pErrorForward->AddFunction(callback))

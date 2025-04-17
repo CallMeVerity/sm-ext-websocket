@@ -39,6 +39,11 @@ WebSocketServer::WebSocketServer(const std::string& host, int port, int addressF
 WebSocketServer::~WebSocketServer() 
 {
 	m_webSocketServer.stop();
+
+	if (pMessageForward) forwards->ReleaseForward(pMessageForward);
+	if (pOpenForward) forwards->ReleaseForward(pOpenForward);
+	if (pCloseForward) forwards->ReleaseForward(pCloseForward);
+	if (pErrorForward) forwards->ReleaseForward(pErrorForward);
 }
 
 void WebSocketServer::OnMessage(const std::string& message, std::shared_ptr<ix::ConnectionState> connectionState, ix::WebSocket* client) 
@@ -203,7 +208,7 @@ void WsServerErrorTaskContext::OnCompleted()
 		}
 	}
 
-	std::string remoteAddress = m_connectionState->getRemoteIp() + ":" + std::to_string(m_connectionState->getRemotePort());
+	std::string remoteAddress = WebSocketServer::GetRemoteAddress(m_connectionState);
 	m_server->pErrorForward->PushCell(m_server->m_webSocketServer_handle);
 	m_server->pErrorForward->PushString(m_errorInfo.reason.c_str());
 	m_server->pErrorForward->PushString(remoteAddress.c_str());

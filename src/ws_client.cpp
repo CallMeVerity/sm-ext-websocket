@@ -39,8 +39,12 @@ WebSocketClient::WebSocketClient(const char* url, uint8_t type)
 
 WebSocketClient::~WebSocketClient() 
 {
-	if (!m_keepConnecting)
-		m_webSocket->stop();
+	if (!m_keepConnecting) m_webSocket->stop();
+
+	if (pMessageForward) forwards->ReleaseForward(pMessageForward);
+	if (pOpenForward) forwards->ReleaseForward(pOpenForward);
+	if (pCloseForward) forwards->ReleaseForward(pCloseForward);
+	if (pErrorForward) forwards->ReleaseForward(pErrorForward);
 }
 
 bool WebSocketClient::IsConnected()

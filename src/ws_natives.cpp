@@ -45,6 +45,10 @@ static cell_t ws_SetMessageCallback(IPluginContext *pContext, const cell_t *para
 	}
 
 	IPluginFunction *callback = pContext->GetFunctionById(params[2]);
+
+	if (pWebSocketClient->pMessageForward) {
+		forwards->ReleaseForward(pWebSocketClient->pMessageForward);
+	}
 	
 	pWebSocketClient->pMessageForward = forwards->CreateForwardEx(nullptr, ET_Ignore, 3, nullptr, Param_Cell, pWebSocketClient->m_callback_type == WebSocket_JSON ? Param_Cell : Param_String, Param_Cell);
 	if (!pWebSocketClient->pMessageForward || !pWebSocketClient->pMessageForward->AddFunction(callback))
@@ -67,6 +71,10 @@ static cell_t ws_SetOpenCallback(IPluginContext *pContext, const cell_t *params)
 
 	IPluginFunction *callback = pContext->GetFunctionById(params[2]);
 
+	if (pWebSocketClient->pOpenForward) {
+		forwards->ReleaseForward(pWebSocketClient->pOpenForward);
+	}
+
 	pWebSocketClient->pOpenForward = forwards->CreateForwardEx(nullptr, ET_Ignore, 1, nullptr, Param_Cell);
 	if (!pWebSocketClient->pOpenForward || !pWebSocketClient->pOpenForward->AddFunction(callback))
 	{
@@ -88,6 +96,10 @@ static cell_t ws_SetCloseCallback(IPluginContext *pContext, const cell_t *params
 
 	IPluginFunction *callback = pContext->GetFunctionById(params[2]);
 
+	if (pWebSocketClient->pCloseForward) {
+		forwards->ReleaseForward(pWebSocketClient->pCloseForward);
+	}
+
 	pWebSocketClient->pCloseForward = forwards->CreateForwardEx(nullptr, ET_Ignore, 3, nullptr, Param_Cell, Param_Cell, Param_String);
 	if (!pWebSocketClient->pCloseForward || !pWebSocketClient->pCloseForward->AddFunction(callback))
 	{
@@ -108,6 +120,10 @@ static cell_t ws_SetErrorCallback(IPluginContext *pContext, const cell_t *params
 	}
 
 	IPluginFunction *callback = pContext->GetFunctionById(params[2]);
+
+	if (pWebSocketClient->pErrorForward) {
+		forwards->ReleaseForward(pWebSocketClient->pErrorForward);
+	}
 
 	pWebSocketClient->pErrorForward = forwards->CreateForwardEx(nullptr, ET_Ignore, 2, nullptr, Param_Cell, Param_String);
 	if (!pWebSocketClient->pErrorForward || !pWebSocketClient->pErrorForward->AddFunction(callback))
