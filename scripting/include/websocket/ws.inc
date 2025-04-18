@@ -295,6 +295,17 @@ methodmap WebSocketServer < Handle
   public native void BroadcastMessage(const char[] message);
 
   /**
+  * Retrieves the value of a specific HTTP header from a connected WebSocket client.
+  *
+  * @param clientId          The unique ID of the client.
+  * @param headerKey         The name of the HTTP header to retrieve.
+  * @param buffer            The buffer to store the retrieved header value.
+  * @param maxlength         The maximum number of characters to write to the buffer (including null terminator).
+  * @return                  True if the header was found and written to the buffer, false otherwise.
+  */
+  public native bool GetHeader(const char[] clientId, const char[] headerKey, char[] buffer, int maxlength);
+
+  /**
   * Send a message to the client
   *
   * @param clientId          client id

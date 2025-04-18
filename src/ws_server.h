@@ -15,6 +15,7 @@ public:
 	bool sendToClient(const std::string& clientId, const std::string& message);
 	bool disconnectClient(const std::string& clientId);
 	std::vector<std::string> getClientIds();
+	bool getClientHeaders(const std::string& clientId, ix::WebSocketHttpHeaders& outHeaders);
 	
 	ix::WebSocketServer m_webSocketServer;
 	Handle_t m_webSocketServer_handle = BAD_HANDLE;
@@ -26,6 +27,16 @@ public:
 	IChangeableForward *pOpenForward = nullptr;
 	IChangeableForward *pCloseForward = nullptr;
 	IChangeableForward *pErrorForward = nullptr;
+
+	std::shared_ptr<ix::WebSocket> GetClientById(const std::string& clientId)
+	{
+		for (const auto& [websocket, id] : m_webSocketServer.getClients())
+		{
+			if (id == clientId) return websocket;
+		}
+		
+		return nullptr;
+	}
 
 	static std::string GetRemoteAddress(const std::shared_ptr<ix::ConnectionState>& connectionState) {
 		return connectionState->getRemoteIp() + ":" + std::to_string(connectionState->getRemotePort());

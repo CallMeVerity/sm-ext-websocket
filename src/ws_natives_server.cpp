@@ -279,6 +279,36 @@ static cell_t ws_IsDeflateEnabled(IPluginContext *pContext, const cell_t *params
 	return pWebsocketServer->m_webSocketServer.isPerMessageDeflateEnabled();
 }
 
+static cell_t ws_GetHeader(IPluginContext *pContext, const cell_t *params)
+{
+	WebSocketServer* pWebsocketServer = GetWsServerPointer(pContext, params[1]);
+
+	if (!pWebsocketServer)
+	{
+		return 0;
+	}
+
+	char *clientId, *headerKey;
+	pContext->LocalToString(params[2], &clientId);
+	pContext->LocalToString(params[3], &headerKey);
+
+	ix::WebSocketHttpHeaders headers;
+	if (!pWebsocketServer->getClientHeaders(clientId, headers))
+	{
+		return 0;
+	}
+
+	auto it = headers.find(headerKey);
+	if (it == headers.end())
+	{
+		return 0;
+	}
+
+	pContext->StringToLocal(params[4], params[5], it->second.c_str());
+
+	return 1;
+}
+
 static cell_t ws_GetClientIdByIndex(IPluginContext *pContext, const cell_t *params)
 {
 	WebSocketServer *pWebsocketServer = GetWsServerPointer(pContext, params[1]);
@@ -332,6 +362,7 @@ const sp_nativeinfo_t ws_natives_server[] =
 	{"WebSocketServer.BroadcastMessage",       ws_BroadcastMessage},
 	{"WebSocketServer.SendMessageToClient",    ws_SendMessageToClient},
 	{"WebSocketServer.DisconnectClient",       ws_DisconnectClient},
+	{"WebSocketServer.GetHeader",              ws_GetHeader},
 	{"WebSocketServer.ClientsCount.get",       ws_GetClientsCount},
 	{"WebSocketServer.EnablePong.get",         ws_SetOrGetPongEnable},
 	{"WebSocketServer.EnablePong.set",         ws_SetOrGetPongEnable},

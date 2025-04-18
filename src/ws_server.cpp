@@ -100,29 +100,21 @@ void WebSocketServer::broadcastMessage(const std::string& message) {
 }
 
 bool WebSocketServer::sendToClient(const std::string& clientId, const std::string& message) {
-	auto clients = m_webSocketServer.getClients();
-	
-	for (const auto& client : clients)
-	{
-		if (client.second == clientId) {
-			client.first->send(message);
-			return true;
-		}
-	}
-	return false;
+	auto client = GetClientById(clientId);
+	if (!client) return false;
+
+	client->send(message);
+
+	return true;
 }
 
 bool WebSocketServer::disconnectClient(const std::string& clientId) {
-	auto clients = m_webSocketServer.getClients();
-	
-	for (const auto& client : clients)
-	{
-		if (client.second == clientId) {
-			client.first->stop();
-			return true;
-		}
-	}
-	return false;
+	auto client = GetClientById(clientId);
+	if (!client) return false;
+
+	client->stop();
+
+	return true;
 }
 
 std::vector<std::string> WebSocketServer::getClientIds() {
@@ -135,6 +127,23 @@ std::vector<std::string> WebSocketServer::getClientIds() {
 	}
 
 	return clientIds;
+}
+
+bool WebSocketServer::getClientHeaders(const std::string& clientId, ix::WebSocketHttpHeaders& outHeaders)
+{
+	auto client = GetClientById(clientId);
+	if (!client)
+		return false;
+
+	std::lock_guard<std::mutex> lock(m_headersMutex);
+	auto it = m_connectionHeaders.find(clientId);
+	if (it != m_connectionHeaders.end())
+	{
+		outHeaders = it->second;
+		return true;
+	}
+	
+	return false;
 }
 
 void WsServerMessageTaskContext::OnCompleted()
